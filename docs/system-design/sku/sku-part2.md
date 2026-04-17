@@ -1,10 +1,8 @@
 # 电商 SKU 系统设计（二）：服务端 SKU 建模与接口设计
 
----
-
 在上一篇 👉
 
-[《电商 SKU 系统设计（一）：基于笛卡尔积的 SKU 建模实践》](sku-part1.md)
+[《电商 SKU 系统设计（一）：基于笛卡尔积的 SKU 建模实践》](./sku-part1.md)
 
 中，我们已经明确了三个核心结论：
 
@@ -22,13 +20,9 @@
 
 > 👉 从数据库出发，构建出客户端可直接使用的 SKU 数据模型（specList + skuList）
 
----
-
 ## 1. 服务端的职责边界
 
 在 SKU 系统中，服务端与客户端的职责必须严格拆分，否则系统会迅速复杂化。
-
----
 
 ### ❗ 服务端不负责
 
@@ -38,8 +32,6 @@
 * ❌ 用户点击后的联动逻辑
 * ❌ 规格禁用 / 高亮判断
 * ❌ SKU 实时可选路径计算
-
----
 
 ### ✔ 服务端只负责
 
@@ -51,13 +43,9 @@
 3. 提供基础业务属性（价格 / 库存等）
 ```
 
----
-
 ### ✔ 一句话总结
 
 > 服务端负责“数据构建”，客户端负责“状态计算”
-
----
 
 ## 2. 数据库表设计
 
@@ -70,7 +58,7 @@ Spec（规格维度）
 SpecValue（规格值）
 ```
 
----
+
 
 ### 2.1 商品表（t_spu）
 
@@ -87,7 +75,7 @@ CREATE TABLE `t_spu`
 
 👉 SPU 是 SKU 的聚合上层
 
----
+
 
 ### 2.2 SKU 表（t_sku）
 
@@ -106,7 +94,7 @@ CREATE TABLE `t_sku`
 
 👉 每一行代表一个“真实存在的组合”
 
----
+
 
 ### 2.3 规格定义表（t_spec_key）
 
@@ -124,7 +112,7 @@ CREATE TABLE `t_spec_key`
 
 👉 表示“有哪些维度”
 
----
+
 
 ### 2.4 规格值表（t_spec_value）
 
@@ -144,7 +132,7 @@ CREATE TABLE `t_spec_value`
 
 👉 表示“维度下的取值空间”
 
----
+
 
 ### 2.5 SKU 关联表（t_sku_spec_rel）
 
@@ -164,7 +152,7 @@ CREATE TABLE `t_sku_spec_rel`
 
 👉 用于表达 SKU ↔ 多维规格的映射关系
 
----
+
 
 ### ✔ 关系总结
 
@@ -176,14 +164,12 @@ SPU (1)
         SPEC_KEY     SPEC_VALUE
 ```
 
----
+
 
 ### ✔ 核心设计思想
 
 > SKU = 多维规格组合
 > 👉 用“中间表”表达多对多关系
-
----
 
 ## 3. 为什么不使用“冗余字段设计”？
 
@@ -196,7 +182,7 @@ t_sku
 - style
 ```
 
----
+
 
 ### ❌ 问题
 
@@ -206,7 +192,7 @@ t_sku
 * SKU 模型强耦合业务
 * 无法支持通用规格系统
 
----
+
 
 ### ✔ 当前设计优势
 
@@ -220,15 +206,13 @@ t_sku
 * 支持任意维度组合
 * 更符合通用电商模型
 
----
-
 ## 4. SKU 查询流程设计
 
 目标非常明确：
 
 > 👉 根据 spuId 构建 specList + skuList
 
----
+
 
 ### ✔ 标准查询流程
 
@@ -240,8 +224,6 @@ FROM t_spu
 WHERE id = ?
 ```
 
----
-
 #### Step 2：查询 SKU 列表
 
 ```sql
@@ -249,8 +231,6 @@ SELECT *
 FROM t_sku
 WHERE spu_id = ?
 ```
-
----
 
 #### Step 3：查询 SKU 关联关系
 
@@ -260,8 +240,6 @@ FROM t_sku_spec_rel
 WHERE sku_id IN (...)
 ```
 
----
-
 #### Step 4：提取规格维度
 
 ```java
@@ -270,8 +248,6 @@ List<Long> specIds = rels.stream()
     .distinct()
     .toList();
 ```
-
----
 
 #### Step 5：查询规格定义
 
@@ -285,13 +261,9 @@ FROM t_spec_value
 WHERE spec_id IN (...);
 ```
 
----
-
 ### ✔ 设计关键点
 
 > 所有查询必须“批量化”，避免 N+1 查询问题
-
----
 
 ## 5. 数据组装
 
@@ -313,7 +285,7 @@ WHERE spec_id IN (...);
 * **skuList**：描述所有真实存在的 SKU 组合
 * **defaultSkuId**：默认选中的 SKU
 
----
+
 
 ### 5.2 数据来源有哪些
 
@@ -331,7 +303,7 @@ skuList 来自：
 
 这些数据在数据库中是分散存储的，且通过关系进行关联。
 
----
+
 
 ### 5.3 转换过程做了什么
 
@@ -339,7 +311,7 @@ skuList 来自：
 
 这个过程可以抽象为三步：
 
----
+
 
 1. 聚合规格维度：将规格定义（SpecKey）与规格值（SpecValue）按 specId 进行聚合，构建出每个规格维度及其可选值列表，形成
    specList。
@@ -349,7 +321,7 @@ skuList 来自：
 
 3. 形成结构化数据：将上述结果组合为统一的接口返回结构（specList + skuList + defaultSkuId），供客户端直接使用。
 
----
+
 
 整个过程的本质是：
 
@@ -357,7 +329,7 @@ skuList 来自：
 将“分散的关系数据”转换为“结构化的组合数据”
 ```
 
----
+
 
 ### 5.4 关于实现
 
@@ -369,7 +341,7 @@ skuList 来自：
 SpuDetailBO#transform
 ```
 
----
+
 
 ## 6. defaultSkuId 设计说明
 
@@ -379,14 +351,14 @@ SpuDetailBO#transform
 defaultSkuId = 手动写入 t_spu 表
 ```
 
----
+
 
 ### ✔ 设计目的
 
 * 简化初始化逻辑
 * 支持前端默认展示
 
----
+
 
 ### ❗ 实际业务中通常：
 
@@ -394,11 +366,11 @@ defaultSkuId = 手动写入 t_spu 表
 * 基于销量排序
 * 基于推荐策略计算
 
----
+
 
 > 👉 default SKU 本质是“策略问题”
 
----
+
 
 ## 7. 总结
 
@@ -406,7 +378,7 @@ defaultSkuId = 手动写入 t_spu 表
 
 > 👉 从数据库构建标准 SKU 数据结构
 
----
+
 
 ### ✔ 全流程回顾
 
@@ -420,7 +392,7 @@ defaultSkuId = 手动写入 t_spu 表
 7. 返回结构
 ```
 
----
+
 
 ### ✔ 最终输出
 
@@ -432,12 +404,12 @@ defaultSkuId = 手动写入 t_spu 表
 }
 ```
 
----
+
 
 👉 Java 服务端 Demo：
 [sku-engine-java](https://github.com/yuncodelab/sku-engine-java)
 
----
+
 
 ## 8. 下一篇预告
 
@@ -447,15 +419,15 @@ defaultSkuId = 手动写入 t_spu 表
 specList + skuList + defaultSkuId
 ```
 
----
+
 
 下一步进入真正的核心：
 
 > ❓ 客户端如何实现 SKU 选择状态计算？
 
----
 
-👉 下一篇：[《电商 SKU 系统设计（三）：Android SKU 选择引擎实现》](sku-part3.md)
+
+👉 下一篇：[《电商 SKU 系统设计（三）：Android SKU 选择引擎实现》](./sku-part3.md)
 
 将实现：
 
@@ -463,4 +435,3 @@ specList + skuList + defaultSkuId
 * SkuEngine 设计
 * UI 状态联动机制
 
----

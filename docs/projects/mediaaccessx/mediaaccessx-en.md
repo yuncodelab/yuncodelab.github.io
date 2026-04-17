@@ -9,11 +9,10 @@ English | [中文](mediaaccessx.md)
 * Picking images
 * Picking files
 
-It offers a concise DSL-style API and automatically adapts to storage and permission differences across Android versions.
+It offers a concise DSL-style API and automatically adapts to storage and permission differences across Android
+versions.
 
----
-
-# Why Build This Library
+## Why Build This Library
 
 In Android development, we frequently deal with several common requirements:
 
@@ -31,7 +30,8 @@ These tasks may seem straightforward, but real-world implementation involves man
 * Lifecycle constraints of the ActivityResult API
 * Inconsistent results from different system components
 
-In many projects, these features are implemented via **copy-paste + partial modification**, which leads to scattered code and frequent pitfalls.
+In many projects, these features are implemented via **copy-paste + partial modification**, which leads to scattered
+code and frequent pitfalls.
 
 ---
 
@@ -102,8 +102,6 @@ These pieces of logic often end up scattered across different parts of the codeb
 
 Individually, they are not complex—but **as a whole, the structure becomes fragmented and harder to maintain**.
 
----
-
 This leads to a natural question:
 
 **Can these capabilities be unified?**
@@ -114,15 +112,11 @@ The goal is simple:
 
 **Unify Android media access and provide a cleaner, more ergonomic API.**
 
----
-
-# Design Goals
+## Design Goals
 
 MediaAccessX focuses on a few key design goals.
 
----
-
-## 1. Unified API
+### 1. Unified API
 
 Provide a consistent abstraction for:
 
@@ -133,9 +127,7 @@ Provide a consistent abstraction for:
 
 Avoid maintaining multiple utility classes across the project.
 
----
-
-## 2. DSL-Style API
+### 2. DSL-Style API
 
 The API is designed to be concise and expressive.
 
@@ -189,9 +181,7 @@ This design provides two clear benefits:
 * Intuitive API usage
 * Consistency across different features
 
----
-
-## 3. Abstracting System Complexity
+### 3. Abstracting System Complexity
 
 The library internally handles:
 
@@ -202,9 +192,7 @@ The library internally handles:
 
 Developers can focus on business logic without dealing with system-level complexity.
 
----
-
-# Internal Architecture Overview
+## Internal Architecture Overview
 
 To support these features, MediaAccessX introduces a modular internal architecture.
 
@@ -248,9 +236,7 @@ This can be summarized as:
 4. Launch system components via Fragment
 5. Receive ActivityResult callback
 
----
-
-## Builder + Executor Pattern
+### Builder + Executor Pattern
 
 All features in MediaAccessX follow a unified pattern:
 
@@ -264,7 +250,7 @@ Builder → Executor
 For example:
 
 | Feature     | Builder            | Executor            |
-| ----------- | ------------------ | ------------------- |
+|-------------|--------------------|---------------------|
 | Camera      | CameraBuilder      | CameraExecutor      |
 | Saver       | SaverBuilder       | SaverExecutor       |
 | PhotoPicker | PhotoPickerBuilder | PhotoPickerExecutor |
@@ -272,13 +258,12 @@ For example:
 
 This cleanly separates configuration from execution, making responsibilities explicit and maintainable.
 
----
-
-## Headless Fragment for ActivityResult
+### Headless Fragment for ActivityResult
 
 The ActivityResult API has a key constraint:
 
-> `registerForActivityResult()` must be called before the Fragment or Activity is created, and launching is only allowed after the Lifecycle reaches CREATED.
+> `registerForActivityResult()` must be called before the Fragment or Activity is created, and launching is only allowed
+> after the Lifecycle reaches CREATED.
 
 This makes dynamic usage error-prone.
 
@@ -302,9 +287,7 @@ This approach enables:
 
 From the developer’s perspective, this Fragment is completely transparent.
 
----
-
-# Summary
+## Summary
 
 The goal of MediaAccessX is straightforward:
 
@@ -325,11 +308,10 @@ MediaAccessX.with(activity)
     .launch { /* handle result */ }
 ```
 
-If your project frequently involves camera, media picking, or file handling, **MediaAccessX** can help reduce repetitive work and improve consistency.
+If your project frequently involves camera, media picking, or file handling, **MediaAccessX** can help reduce repetitive
+work and improve consistency.
 
----
-
-# Project
+## Project
 
 GitHub:
 [https://github.com/yuncodelab/mediaaccessx](https://github.com/yuncodelab/mediaaccessx)

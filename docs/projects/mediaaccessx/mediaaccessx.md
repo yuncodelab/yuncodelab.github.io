@@ -11,9 +11,7 @@
 
 并提供一套简洁的 DSL API，同时自动适配 Android 不同版本的存储与权限机制。
 
----
-
-# 为什么要做这个库
+## 为什么要做这个库
 
 在 Android 开发中，我们经常会遇到几个非常常见的需求：
 
@@ -102,8 +100,6 @@ launcher.launch(uri)
 
 虽然每一块代码本身都不复杂，但**整体结构会越来越分散，也越来越难统一维护**。
 
----
-
 这也是我开始思考一个问题的原因：
 
 **能不能把这些能力统一起来？**
@@ -114,15 +110,11 @@ launcher.launch(uri)
 
 **统一 Android 的媒体访问能力，并提供更优雅的调用方式。**
 
----
-
-# 设计目标
+## 设计目标
 
 MediaAccessX 的设计目标主要有几个。
 
----
-
-## 1 统一 API
+### 1 统一 API
 
 统一处理以下功能：
 
@@ -133,9 +125,7 @@ MediaAccessX 的设计目标主要有几个。
 
 避免在项目中维护多套工具类。
 
----
-
-## 2 DSL 风格调用
+### 2 DSL 风格调用
 
 希望 API 调用方式足够简洁。
 
@@ -189,9 +179,7 @@ launch()
 * API 非常直观
 * 不同功能之间保持一致
 
----
-
-## 3 自动处理系统复杂度
+### 3 自动处理系统复杂度
 
 库内部自动处理：
 
@@ -202,9 +190,7 @@ launch()
 
 开发者只需要关注功能本身，而不需要处理复杂的系统细节。
 
----
-
-# 简单看一下内部架构
+## 简单看一下内部架构
 
 为了实现这些功能，MediaAccessX 在内部做了一些架构拆分。
 
@@ -248,9 +234,7 @@ Result Callback
 4. 通过 Fragment 启动系统组件
 5. 接收 ActivityResult 回调
 
----
-
-## Builder + Executor 架构
+### Builder + Executor 架构
 
 MediaAccessX 中所有功能都遵循同一个模式：
 
@@ -272,9 +256,7 @@ Builder → Executor
 
 这样配置层和执行层就完全解耦，每个类的职责也更加清晰。
 
----
-
-## Headless Fragment 封装 ActivityResult
+### Headless Fragment 封装 ActivityResult
 
 ActivityResult API 有一个限制：
 
@@ -303,9 +285,7 @@ MediaActivityResultFragment
 
 开发者在使用时完全感知不到这个 Fragment 的存在。
 
----
-
-# 总结
+## 总结
 
 MediaAccessX 的目标很简单：
 
@@ -328,9 +308,7 @@ MediaAccessX.with(activity)
 
 如果你在项目中经常需要处理拍照、选图或文件选择，希望 **MediaAccessX** 能帮你减少一些重复工作。
 
----
-
-# 项目地址
+## 项目地址
 
 GitHub
 [https://github.com/yuncodelab/mediaaccessx](https://github.com/yuncodelab/mediaaccessx)
