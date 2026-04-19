@@ -1,16 +1,16 @@
-# 技术知识体系 / Engineering Knowledge Base
+# 技术知识体系 
 
-个人技术沉淀与系统设计记录（System Design, Mobile, and Engineering Notes）
+个人技术沉淀与系统设计记录
 
-## 📦 系统设计 System Design
+## 📦 系统设计
 
-- SKU 系统设计 / SKU System Design
+- [SKU 系统设计](./system-design/sku/index.md)
 
-## 🚀 项目 Projects
+## 🚀 项目
 
-- MediaAccessX（Android 媒体框架）
+- [MediaAccessX](./projects/mediaaccessx/index.md)（Android 媒体框架）
 
-## 📱 移动开发 Mobile
+## 📱 移动开发
 
 - Android
 - Flutter

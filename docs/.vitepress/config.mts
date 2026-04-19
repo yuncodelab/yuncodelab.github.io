@@ -1,26 +1,26 @@
-import { defineConfig } from 'vitepress'
+import {defineConfig} from 'vitepress'
 
 export default defineConfig({
-    title: 'Tech Docs',
-    description: 'Engineering Knowledge System',
+    title: '技术文档',
+    description: '技术知识体系',
 
     themeConfig: {
         nav: [
-            { text: 'Home', link: '/' },
-            { text: 'System Design', link: '/system-design/sku/' },
-            { text: 'Projects', link: '/projects/mediaaccessx/' },
-            { text: 'Mobile', link: '/mobile/android/' }
+            {text: '主页', link: '/'},
+            {text: '系统设计', link: '/system-design/sku/'},
+            {text: '项目', link: '/projects/mediaaccessx/'},
+            {text: '移动开发', link: '/mobile/android/'}
         ],
 
         sidebar: {
             '/system-design/sku/': [
                 {
-                    text: 'SKU System Design',
+                    text: 'SKU 系统设计',
                     items: [
-                        { text: 'Overview', link: '/system-design/sku/' },
-                        { text: 'Part 1', link: '/system-design/sku/sku-part1' },
-                        { text: 'Part 2', link: '/system-design/sku/sku-part2' },
-                        { text: 'Part 3', link: '/system-design/sku/sku-part3' }
+                        {text: '方案总览 (Overview)', link: '/system-design/sku/'},
+                        {text: '数据结构设计', link: '/system-design/sku/sku-part1'},
+                        {text: '服务端实现', link: '/system-design/sku/sku-part2'},
+                        {text: 'Android端实现', link: '/system-design/sku/sku-part3'}
                     ]
                 }
             ],
@@ -29,9 +29,7 @@ export default defineConfig({
                 {
                     text: 'MediaAccessX',
                     items: [
-                        { text: 'Intro', link: '/projects/mediaaccessx/' },
-                        { text: 'Chinese', link: '/projects/mediaaccessx/mediaaccessx' },
-                        { text: 'English', link: '/projects/mediaaccessx/mediaaccessx-en' }
+                        {text: '项目简介', link: '/projects/mediaaccessx/'},
                     ]
                 }
             ]
