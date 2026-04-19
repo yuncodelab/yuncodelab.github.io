@@ -2,7 +2,7 @@
 
 在前两篇中：
 
-👉 [电商 SKU 系统设计（一）：基于笛卡尔积的 SKU 建模实践](./sku-part1.md)
+👉 [电商 SKU 系统设计（一）：SKU 建模与数据结构设计（基于笛卡尔积）](./sku-part1.md)
 
 👉 [电商 SKU 系统设计（二）：服务端 SKU 建模与接口设计](./sku-part2.md)
 
@@ -11,7 +11,8 @@
 * SKU 的本质（规格组合）
 * 服务端数据结构（`specList` + `skuList`）
 
-这一篇进入客户端部分，目标是实现 SKU 选择能力。
+这一篇进入客户端部分，目标是：
+> 根据服务端返回的 `specList` + `skuList` 实现 SKU 选择能力。
 
 ## 1. 我们要实现什么效果？
 
@@ -23,27 +24,22 @@
 2. 处理规格的**选中 / 取消选中**
 3. 动态计算每个规格值的**状态: 可选 / 不可选 / 售罄 / 已选中**
 
-### SKU 状态是怎么来的？
+## 2. 状态定义：规格值是如何变灰的？
 
-这里简单说明一下 SKU 状态的来源。
+在编写代码之前，我们需要理清四种核心状态的逻辑关系。这本质上是在维护一个**动态的状态机**：
 
-在第一篇中我们提到：规格组合本质是**笛卡尔积**。
+* **SELECTED（已选）**：用户当前主动点击的规格。
+* **ENABLED（可选）**：在当前已选条件下，该规格值能找到**至少一个**有库存的 SKU。
+* **OUT_OF_STOCK（售罄）**：在当前已选条件下，该规格值对应的组合确实存在，但**所有匹配到的 SKU 库存均为 0**。
+* **DISABLED（不可选）**：在当前已选条件下，该规格值与已选规格组合后，在 `skuList` 中**找不到任何对应的有效 SKU**。
 
-假设规格组合一共有 `18` 种，但实际 `skuList` 只包含其中一部分，那么：
+> **核心逻辑**：每当用户点击一次规格，我们就需要针对**全量**的规格值，重新进行一次“路径匹配”计算。
 
-* ❌ 不存在的组合 → 不可选（DISABLED）
-* ⚠️ 存在但库存为 0 → 售罄（OUT_OF_STOCK）
-* ✅ 存在且有库存 → 可选（ENABLED）
+## 3. 从 UI 出发：我们到底需要什么数据？
 
-👉 因此，每个规格值的状态，本质都是：
+现在，我们有了 `specList` + `skuList`。
 
-> 根据当前选择，在 skuList 中匹配计算得到的结果
-
-接下来，我们开始实战。
-
-## 2. 从 UI 出发：我们到底需要什么数据？
-
-从 UI 出发，我们只需要两类数据：
+但是这个 JSON 数据中没有状态。从 UI 出发，我们到底需要什么数据？答案是：
 
 1. `List<SpecResult>`：用于规格展示（带状态）
 2. `SkuResult`：当前选中的 SKU 结果
@@ -98,7 +94,7 @@ data class SelectedSpec(
 `SkuResult` 相较于服务端 `skuList`，将规格信息从 `Map` 结构转换为结构化的 `SelectedSpec` 列表，用于更清晰地表达当前 SKU
 的完整规格组合信息。
 
-## 3. UI 与 ViewModel 职责划分
+## 4. UI 与 ViewModel 职责划分
 
 有了数据结构后，UI 需要随着用户操作自动更新。在 Android 中，推荐使用 StateFlow 驱动 UI。
 
@@ -173,7 +169,7 @@ class SkuViewModel : ViewModel() {
 
 > 👉 SkuEngine
 
-## 4. SkuEngine 设计
+## 5. SkuEngine 设计
 
 ### 4.1 SkuEngine 职责
 
@@ -193,177 +189,60 @@ class SkuViewModel : ViewModel() {
 
 > 将服务端返回的数据，转换为客户端可直接使用的状态数据
 
-### 4.2 核心状态管理
+### 4.2 核心实现逻辑（伪代码）
 
-`SkuEngine` 内部维护一个关键状态：
+#### A. 维护“当前选择”
 
-```kotlin
-// 当前已选规格：specId → valueId
-private val selectedSpecMap = mutableMapOf<String, String>()
-```
-
-它表示用户当前的选择，是所有计算的基础。
-
-所有能力都依赖这个状态：
-
-* 规格值是否可选
-* 是否售罄
-* 当前选中的 SKU 是哪个
-
-### 4.3 默认选中逻辑
-
-进入页面时，需要初始化默认选中状态。
-
-处理逻辑如下：
-
-```text
-1. 优先使用服务端返回的 defaultSkuId
-
-2. 如果该 SKU 不存在或库存为 0，
-   则选择第一个有库存的 SKU
-
-3. 根据目标 SKU，反推其规格组合，
-   初始化“当前已选规格”
-```
-
-👉 本质是：
-
-> 通过 SKU 反推出初始的规格选择状态
-
-
-
-具体实现可参考：
-
-```text
-SkuEngine#initDefaultSelection
-```
-
-### 4.4 UI 数据构建
-
-`SkuEngine` 需要将原始数据转换为 UI 可直接渲染的结构。
-
-处理逻辑如下：
-
-```text
-遍历所有规格维度（specList）
-
-→ 遍历每个规格值
-
-→ 为每个规格值计算当前状态
-
-→ 构建 SpecResult 列表
-```
-
-👉 本质是：
-
-> 为“每一个规格值”补充一个动态状态
-
-
-
-具体实现可参考：
-
-```text
-SkuEngine#buildSpecUI
-```
-
-### 4.5 规格状态计算规则（核心）
-
-规格状态的计算基于一种“假设选择”机制。
-
-### 计算流程：
-
-```text
-1. 如果当前规格值已经被选中
-   → SELECTED
-
-2. 否则，模拟将该规格值加入当前选择
-
-3. 在 skuList 中查找所有匹配该组合的 SKU：
-
-   - 无匹配 SKU
-     → DISABLED（不可选）
-
-   - 有匹配但库存为 0
-     → OUT_OF_STOCK（售罄）
-
-   - 有匹配且库存 > 0
-     → ENABLED（可选）
-```
-
-👉 本质可以总结为：
-
-> 当前选择 + 尝试组合 → 匹配 skuList
-
-
-
-示例代码如下：
+引擎内部维护一个 `Map`，记录用户的点击轨迹。
 
 ```kotlin
-    private fun calculateStatus(specId: String, valueId: String): SpecValueStatus {
+private val selectedSpecMap = mutableMapOf<String, String>() // <specId, valueId>
+```
 
-    if (selectedSpecMap[specId] == valueId) {
-        return SpecValueStatus.SELECTED
+#### B. 核心：计算规格状态（计算每一个 Cell 的颜色）
+
+这是引擎的灵魂。每当状态变化，我们会对**每一个**规格值执行以下校验逻辑：
+
+```kotlin
+fun calculateStatus(targetSpecId: String, targetValueId: String): SpecValueStatus {
+    // 1. 如果是当前已选，直接返回 SELECTED
+    if (selectedSpecMap[targetSpecId] == targetValueId) return SELECTED
+
+    // 2. 关键：假设法校验
+    // 拷贝一份当前选择，并将正在校验的这个值“假装”选进去
+    val tempSelected = selectedSpecMap + (targetSpecId to targetValueId)
+
+    // 3. 在 skuList 中寻找符合 tempSelected 条件的所有 SKU
+    val matchedSkus = skuList.filter { it.matches(tempSelected) }
+
+    // 4. 根据匹配结果定生死
+    return when {
+        matchedSkus.isEmpty() -> DISABLED       // 根本没这个组合
+        matchedSkus.any { it.stock > 0 } -> ENABLED // 只要有一个有货就行
+        else -> OUT_OF_STOCK                    // 有组合但全卖光了
     }
-
-    val tempSelected = selectedSpecMap.toMutableMap()
-    tempSelected[specId] = valueId
-
-    val matchedSkus = skuList.filter { sku ->
-        tempSelected.all { (sId, vId) ->
-            sku.specs[sId] == vId
-        }
-    }
-
-    if (matchedSkus.isEmpty()) {
-        return SpecValueStatus.DISABLED
-    }
-
-    if (matchedSkus.all { it.stock <= 0 }) {
-        return SpecValueStatus.OUT_OF_STOCK
-    }
-
-    return SpecValueStatus.ENABLED
 }
 ```
 
-### 4.6 对外能力（供 ViewModel 使用）
-
-`SkuEngine` 对外提供三个核心能力：
-
-#### 1. 初始化规格状态
+#### C. 数据转换逻辑（从 List 到 UI Model）
 
 ```kotlin
-// 初始化默认选中状态，并返回完整规格 UI 数据
-fun initSpecStatus(): List<SpecResult> {
-    ...
+fun buildSpecUI(): List<SpecResult> {
+    return specList.map { spec ->
+        SpecResult(
+            specId = spec.specId,
+            values = spec.values.map { value ->
+                SpecValueResult(
+                    id = value.id,
+                    status = calculateStatus(spec.specId, value.id) // 核心调用点
+                )
+            }
+        )
+    }
 }
 ```
 
-#### 2. 更新规格选择
-
-```kotlin
-// 更新当前选择状态，并重新计算所有规格值状态
-fun select(specId: String, valueId: String): List<SpecResult> {
-    ...
-}
-```
-
-#### 3. 获取当前 SKU
-
-```kotlin
-// 根据当前选择，返回匹配的 SKU（若未选完整则返回空）
-fun getSelectedSku(): SkuResult? {
-    ...
-}
-```
-
-更多具体实现可参考：
-
-```text
-SkuEngine
-```
-
-## 5. 性能优化与架构思考
+## 6. 性能优化与架构思考
 
 ### 1. 时间复杂度
 
@@ -393,7 +272,7 @@ O(M × N × K)
 
 > “假设校验法”才是工程上的最优解
 
-## 6. 总结
+## 7. 总结
 
 这一篇完成了 SKU 系统最关键的一环：
 
@@ -416,7 +295,8 @@ O(M × N × K)
 
 > 系列回顾：
 >
-> * [第一篇：基于笛卡尔积的 SKU 建模实践](./sku-part1.md)
+> * [电商 SKU 系统设计开篇](./index.md)
+> * [第一篇：数据结构设计（基于笛卡尔积）](./sku-part1.md)
 > * [第二篇：服务端 SKU 接口与数据设计](./sku-part2.md)
 > * 第三篇：Android SKU 选择引擎实现（本文）
 
