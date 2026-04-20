@@ -23,7 +23,7 @@
 
 在开始之前，我们先搞清楚 3 个核心概念。
 
-### 1. SPU（Standard Product Unit）
+### SPU（Standard Product Unit）
 
 SPU 表示**标准商品单元**，即“商品本体”。
 
@@ -34,7 +34,7 @@ SPU 表示**标准商品单元**，即“商品本体”。
 
 👉 SPU = 不带规格的抽象商品
 
-### 2. Spec（规格维度）
+### Spec（规格维度）
 
 Spec 表示商品的**可选维度**，例如：
 
@@ -44,7 +44,7 @@ Spec 表示商品的**可选维度**，例如：
 
 👉 Spec = 决策维度（维度本身）
 
-### 3. SKU（Stock Keeping Unit）
+### SKU（Stock Keeping Unit）
 
 SKU 是**最小库存单元**，由一组规格组合唯一确定。
 

@@ -44,7 +44,7 @@
 1. `List<SpecResult>`：用于规格展示（带状态）
 2. `SkuResult`：当前选中的 SKU 结果
 
-### 1. 规格状态枚举
+### 规格状态枚举
 
 ```kotlin
 enum class SpecValueStatus {
@@ -55,7 +55,7 @@ enum class SpecValueStatus {
 }
 ```
 
-### 2. UI 展示结构
+### UI 展示结构
 
 ```kotlin
 data class SpecResult(
@@ -73,7 +73,7 @@ data class SpecValueResult(
 
 `SpecResult` 相较于服务端 `specList`，在规格值层增加了 `SpecValueStatus`，用于描述当前规格值在不同选择状态下的可用性。
 
-### 3. SKU 选择结果
+### SKU 选择结果
 
 ```kotlin
 data class SkuResult(
@@ -98,7 +98,7 @@ data class SelectedSpec(
 
 有了数据结构后，UI 需要随着用户操作自动更新。在 Android 中，推荐使用 StateFlow 驱动 UI。
 
-### 1. UI 层职责
+### UI 层职责
 
 UI 只做两件事：
 
@@ -125,7 +125,7 @@ specAdapter = SpecAdapter { specId, valueId ->
 }
 ```
 
-### 2. ViewModel 职责
+### ViewModel 职责
 
 `ViewModel` 同样只做两件事：
 
@@ -171,7 +171,7 @@ class SkuViewModel : ViewModel() {
 
 ## 5. SkuEngine 设计
 
-### 4.1 SkuEngine 职责
+### SkuEngine 职责
 
 `SkuEngine` 只负责一件事：
 
@@ -189,7 +189,7 @@ class SkuViewModel : ViewModel() {
 
 > 将服务端返回的数据，转换为客户端可直接使用的状态数据
 
-### 4.2 核心实现逻辑（伪代码）
+### 核心实现逻辑（伪代码）
 
 #### A. 维护“当前选择”
 
@@ -244,7 +244,7 @@ fun buildSpecUI(): List<SpecResult> {
 
 ## 6. 性能优化与架构思考
 
-### 1. 时间复杂度
+### 时间复杂度
 
 每次点击都会遍历所有规格值。
 
@@ -260,7 +260,7 @@ O(M × N × K)
 
 在普通电商场景（K < 500）中，Android 端通常 < 5ms，可忽略。
 
-### 2. 为什么不推荐复杂算法？
+### 为什么不推荐复杂算法？
 
 虽然图结构或邻接矩阵更高效，但：
 
